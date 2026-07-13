@@ -23,6 +23,20 @@ exports.handler = async function (event) {
       return { statusCode: 400, body: JSON.stringify({ error: "Email mancante" }) };
     }
 
+    // Brevo richiede il numero in formato internazionale (es. +393331234567).
+    // Qui lo sistemiamo automaticamente, assumendo un numero italiano se il
+    // candidato non ha già scritto il prefisso internazionale.
+    function normalizzaTelefono(tel) {
+      if (!tel) return "";
+      let pulito = tel.replace(/[^0-9+]/g, ""); // toglie spazi, trattini, parentesi
+      if (pulito.startsWith("+")) return pulito;
+      if (pulito.startsWith("00")) return "+" + pulito.slice(2);
+      if (pulito.startsWith("39")) return "+" + pulito;
+      if (pulito.startsWith("0")) pulito = pulito.slice(1); // es. 0333... -> 333...
+      return "+39" + pulito;
+    }
+    const telefonoNormalizzato = normalizzaTelefono(telefono);
+
     // La chiave segreta NON è scritta qui nel codice: arriva dalla
     // variabile d'ambiente configurata su Netlify (Site settings →
     // Environment variables → BREVO_API_KEY). Così non è mai visibile
@@ -45,7 +59,7 @@ exports.handler = async function (event) {
         email: email,
         attributes: {
           FIRSTNAME: nome || "",
-          SMS: telefono || "",
+          SMS: telefonoNormalizzato,
           // Nota: se vuoi salvare anche l'archetipo e il consenso WhatsApp
           // come colonne visibili in Brevo, vanno prima create come
           // "attributi contatto" personalizzati nelle impostazioni di
