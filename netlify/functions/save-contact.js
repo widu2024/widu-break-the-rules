@@ -6,22 +6,22 @@
 // Riceve i dati dal form della landing e crea (o aggiorna) il contatto
 // su Brevo, aggiungendolo alla lista "Break the Rules" (ID 5).
 // ===================================================================
- 
+
 exports.handler = async function (event) {
   // Accettiamo solo richieste POST (quelle che arrivano dal form)
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Metodo non permesso" }) };
   }
- 
+
   try {
     const data = JSON.parse(event.body);
     const { nome, email, telefono, archetipo, consensoEmail, consensoWhatsapp } = data;
- 
+
     // Controlli minimi: email è l'unico campo che Brevo richiede sempre
     if (!email) {
       return { statusCode: 400, body: JSON.stringify({ error: "Email mancante" }) };
     }
- 
+
     // Brevo richiede il numero in formato internazionale (es. +393331234567).
     // Qui lo sistemiamo automaticamente, assumendo un numero italiano se il
     // candidato non ha già scritto il prefisso internazionale.
@@ -30,24 +30,28 @@ exports.handler = async function (event) {
       let pulito = tel.replace(/[^0-9+]/g, ""); // toglie spazi, trattini, parentesi
       if (pulito.startsWith("+")) return pulito;
       if (pulito.startsWith("00")) return "+" + pulito.slice(2);
-      if (pulito.startsWith("39")) return "+" + pulito;
       if (pulito.startsWith("0")) pulito = pulito.slice(1); // es. 0333... -> 333...
+      // Un numero italiano con prefisso internazionale già incluso ha 12 cifre
+      // e inizia con 39 (es. 39 + 3331234567). Se invece è più corto (10 cifre,
+      // il normale numero di cellulare italiano), il "39" iniziale fa parte del
+      // numero stesso (es. 392...), non è il prefisso: va comunque aggiunto.
+      if (pulito.length === 12 && pulito.startsWith("39")) return "+" + pulito;
       return "+39" + pulito;
     }
     const telefonoNormalizzato = normalizzaTelefono(telefono);
     console.log("DEBUG numero originale:", telefono, "-> normalizzato:", telefonoNormalizzato, "lunghezza:", telefonoNormalizzato.length);
- 
+
     // La chiave segreta NON è scritta qui nel codice: arriva dalla
     // variabile d'ambiente configurata su Netlify (Site settings →
     // Environment variables → BREVO_API_KEY). Così non è mai visibile
     // a chi guarda il codice sorgente della pagina o il repository.
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
     const BREVO_LIST_ID = 5; // la lista "Break the Rules" creata su Brevo
- 
+
     if (!BREVO_API_KEY) {
       return { statusCode: 500, body: JSON.stringify({ error: "Chiave Brevo non configurata sul server" }) };
     }
- 
+
     const brevoResponse = await fetch("https://api.brevo.com/v3/contacts", {
       method: "POST",
       headers: {
@@ -60,11 +64,6 @@ exports.handler = async function (event) {
         attributes: {
           FIRSTNAME: nome || "",
           SMS: telefonoNormalizzato,
-          // Nota: se vuoi salvare anche l'archetipo e il consenso WhatsApp
-          // come colonne visibili in Brevo, vanno prima create come
-          // "attributi contatto" personalizzati nelle impostazioni di
-          // Brevo (Contatti → Impostazioni → Attributi contatto), con
-          // questi stessi nomi: ARCHETIPO (testo), CONSENSO_WHATSAPP (booleano).
           ARCHETIPO: archetipo || "",
           CONSENSO_WHATSAPP: !!consensoWhatsapp
         },
@@ -72,19 +71,18 @@ exports.handler = async function (event) {
         updateEnabled: true // se il contatto esiste già, lo aggiorna invece di dare errore
       })
     });
- 
+
     // Brevo risponde 201 (creato) o 204 (aggiornato) quando va bene
     if (!brevoResponse.ok && brevoResponse.status !== 204) {
       const errText = await brevoResponse.text();
       console.error("Errore da Brevo:", errText);
       return { statusCode: 502, body: JSON.stringify({ error: "Brevo ha rifiutato la richiesta" }) };
     }
- 
+
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
- 
+
   } catch (err) {
     console.error("Errore nella function:", err);
     return { statusCode: 500, body: JSON.stringify({ error: "Errore interno" }) };
   }
 };
-
