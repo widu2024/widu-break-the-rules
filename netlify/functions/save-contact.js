@@ -39,8 +39,6 @@ exports.handler = async function (event) {
       return "+39" + pulito;
     }
     const telefonoNormalizzato = normalizzaTelefono(telefono);
-    console.log("DEBUG numero originale:", telefono, "-> normalizzato:", telefonoNormalizzato, "lunghezza:", telefonoNormalizzato.length);
-
     // La chiave segreta NON è scritta qui nel codice: arriva dalla
     // variabile d'ambiente configurata su Netlify (Site settings →
     // Environment variables → BREVO_API_KEY). Così non è mai visibile
