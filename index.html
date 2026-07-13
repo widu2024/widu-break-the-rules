@@ -455,6 +455,7 @@ function renderReveal(){
   const ranked = Object.keys(scores).sort((a,b)=>scores[b]-scores[a]);
   const top = ranked[0];
   const p = PROFILES[top];
+  window.wbrTopArchetype = top; /* serve dopo, quando il form viene inviato a Brevo */
 
   let scriptHtml = '';
   p.script.forEach(step=>{
@@ -511,10 +512,39 @@ function formHtml(){
 
 function handleSubmit(e){
   e.preventDefault();
-  /* QUI in futuro colleghi il form a un vero servizio (email/CRM/Ikarus).
-     Per ora mostra solo un messaggio di conferma, senza inviare nulla. */
-  document.getElementById('widu-form').style.display = 'none';
-  document.getElementById('w-submitted').style.display = 'block';
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Invio in corso...';
+
+  const payload = {
+    nome: document.getElementById('w-nome').value,
+    email: document.getElementById('w-email').value,
+    telefono: document.getElementById('w-tel').value,
+    archetipo: window.wbrTopArchetype || '',
+    consensoEmail: document.getElementById('w-consenso-email').checked,
+    consensoWhatsapp: document.getElementById('w-consenso-wa').checked
+  };
+
+  /* Manda i dati alla Netlify Function, che li passa in modo sicuro a Brevo
+     (la API key resta segreta sul server, mai visibile qui nel browser). */
+  fetch('/.netlify/functions/save-contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json().then(data => ({ ok: res.ok, data })))
+  .then(({ ok, data }) => {
+    if(!ok) throw new Error(data.error || 'Errore sconosciuto');
+    document.getElementById('widu-form').style.display = 'none';
+    document.getElementById('w-submitted').style.display = 'block';
+  })
+  .catch(err => {
+    console.error('Errore invio contatto:', err);
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Salva il mio profilo';
+    alert('Qualcosa non ha funzionato nel salvataggio. Riprova tra poco.');
+  });
 }
 
 renderQuestion();
