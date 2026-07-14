@@ -493,6 +493,10 @@ function formHtml(){
         <input type="email" id="w-email" required>
       </div>
       <div class="form-field">
+        <label for="w-cognome">Cognome</label>
+        <input type="text" id="w-cognome" required>
+      </div>
+      <div class="form-field">
         <label for="w-tel">Telefono</label>
         <input type="tel" id="w-tel" required>
       </div>
@@ -519,6 +523,7 @@ function handleSubmit(e){
 
   const payload = {
     nome: document.getElementById('w-nome').value,
+    cognome: document.getElementById('w-cognome').value,
     email: document.getElementById('w-email').value,
     telefono: document.getElementById('w-tel').value,
     archetipo: window.wbrTopArchetype || '',
