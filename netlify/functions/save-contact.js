@@ -8,43 +8,31 @@
 // ===================================================================
 
 exports.handler = async function (event) {
-  // Accettiamo solo richieste POST (quelle che arrivano dal form)
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: JSON.stringify({ error: "Metodo non permesso" }) };
   }
 
   try {
     const data = JSON.parse(event.body);
-    const { nome, email, telefono, archetipo, consensoEmail, consensoWhatsapp } = data;
+    const { nome, cognome, email, telefono, archetipo, consensoEmail, consensoWhatsapp } = data;
 
-    // Controlli minimi: email è l'unico campo che Brevo richiede sempre
     if (!email) {
       return { statusCode: 400, body: JSON.stringify({ error: "Email mancante" }) };
     }
 
-    // Brevo richiede il numero in formato internazionale (es. +393331234567).
-    // Qui lo sistemiamo automaticamente, assumendo un numero italiano se il
-    // candidato non ha già scritto il prefisso internazionale.
     function normalizzaTelefono(tel) {
       if (!tel) return "";
-      let pulito = tel.replace(/[^0-9+]/g, ""); // toglie spazi, trattini, parentesi
+      let pulito = tel.replace(/[^0-9+]/g, "");
       if (pulito.startsWith("+")) return pulito;
       if (pulito.startsWith("00")) return "+" + pulito.slice(2);
-      if (pulito.startsWith("0")) pulito = pulito.slice(1); // es. 0333... -> 333...
-      // Un numero italiano con prefisso internazionale già incluso ha 12 cifre
-      // e inizia con 39 (es. 39 + 3331234567). Se invece è più corto (10 cifre,
-      // il normale numero di cellulare italiano), il "39" iniziale fa parte del
-      // numero stesso (es. 392...), non è il prefisso: va comunque aggiunto.
+      if (pulito.startsWith("0")) pulito = pulito.slice(1);
       if (pulito.length === 12 && pulito.startsWith("39")) return "+" + pulito;
       return "+39" + pulito;
     }
     const telefonoNormalizzato = normalizzaTelefono(telefono);
-    // La chiave segreta NON è scritta qui nel codice: arriva dalla
-    // variabile d'ambiente configurata su Netlify (Site settings →
-    // Environment variables → BREVO_API_KEY). Così non è mai visibile
-    // a chi guarda il codice sorgente della pagina o il repository.
+
     const BREVO_API_KEY = process.env.BREVO_API_KEY;
-    const BREVO_LIST_ID = 5; // la lista "Break the Rules" creata su Brevo
+    const BREVO_LIST_ID = 5;
 
     if (!BREVO_API_KEY) {
       return { statusCode: 500, body: JSON.stringify({ error: "Chiave Brevo non configurata sul server" }) };
@@ -60,17 +48,17 @@ exports.handler = async function (event) {
       body: JSON.stringify({
         email: email,
         attributes: {
-          FIRSTNAME: nome || "",
+          NOME: nome || "",
+          COGNOME: cognome || "",
           SMS: telefonoNormalizzato,
           ARCHETIPO: archetipo || "",
           CONSENSO_WHATSAPP: !!consensoWhatsapp
         },
         listIds: [BREVO_LIST_ID],
-        updateEnabled: true // se il contatto esiste già, lo aggiorna invece di dare errore
+        updateEnabled: true
       })
     });
 
-    // Brevo risponde 201 (creato) o 204 (aggiornato) quando va bene
     if (!brevoResponse.ok && brevoResponse.status !== 204) {
       const errText = await brevoResponse.text();
       console.error("Errore da Brevo:", errText);
