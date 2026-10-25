@@ -256,6 +256,25 @@
     text-align: center;
   }
 
+  /* ---------- IMMAGINI DOMANDE + CARTA ARCHETIPO ---------- */
+  .q-enter{ animation: qIn .35s ease both; }
+  @keyframes qIn{ from{ opacity:0; transform: translateY(14px); } to{ opacity:1; transform:none; } }
+  .quiz-visual{ position: relative; aspect-ratio: 16/9; border-radius: 14px; overflow: hidden; background: var(--widu-yellow); margin-bottom: 22px; }
+  .quiz-visual img{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .quiz-visual-ph{ position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 16px 20px; font-family: var(--font-display); font-weight: 700; color: var(--widu-black); }
+  .quiz-visual-ph span{ font-size: 13px; letter-spacing: .1em; text-transform: uppercase; }
+  .quiz-visual-ph b{ font-size: clamp(56px, 14vw, 96px); line-height: .9; }
+  .quiz-option.picked{ background: var(--widu-yellow); border-color: var(--widu-black); font-weight: 600; }
+  .arch-card{ max-width: 360px; margin: 4px auto 0; background: var(--widu-black); color: var(--widu-white); border: 3px solid var(--widu-yellow); border-radius: 22px; overflow: hidden; text-align: left; animation: cardIn .7s cubic-bezier(.2,.9,.2,1.15) both; }
+  @keyframes cardIn{ from{ opacity:0; transform: rotate(-6deg) scale(.85); } to{ opacity:1; transform:none; } }
+  .arch-visual{ position: relative; aspect-ratio: 4/5; background: var(--widu-yellow); }
+  .arch-visual img{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .arch-ph{ position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 700; font-size: 160px; color: var(--widu-black); }
+  .arch-body{ padding: 20px 22px 24px; }
+  .arch-eyebrow{ font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--widu-yellow); margin-bottom: 6px; }
+  .arch-title{ font-family: var(--font-display); font-weight: 700; font-size: 32px; line-height: 1; margin-bottom: 10px; }
+  .arch-desc{ font-size: 15px; color: var(--widu-lightgray); }
+
   footer{
     text-align: center; padding: 32px 24px;
     color: var(--widu-gray); font-size: 13px;
@@ -265,6 +284,31 @@
     position: absolute; width: 1px; height: 1px;
     overflow: hidden; clip: rect(0,0,0,0);
   }
+
+  /* ---------- TEMA SCURO: nero e giallo ---------- */
+  body{ background: var(--widu-black); color: var(--widu-white); }
+  .quiz-section{ background: var(--widu-black); }
+  .quiz-card{ background: #141414; border: 2px solid var(--widu-yellow); }
+  .quiz-progress-label{ color: var(--widu-yellow); }
+  .quiz-progress-track{ background: #333331; }
+  .quiz-question{ color: var(--widu-white); }
+  .quiz-option{ background: #1E1E1D; color: var(--widu-white); border-color: #3A3A38; }
+  .quiz-option:active{ background: #2A2A28; }
+  @media (hover: hover) and (pointer: fine){
+    .quiz-option:hover{ border-color: var(--widu-yellow); color: var(--widu-yellow); }
+  }
+  .quiz-option:focus-visible{ outline-color: var(--widu-yellow); }
+  .quiz-option.picked{ background: var(--widu-yellow); color: var(--widu-black); border-color: var(--widu-yellow); }
+  .reveal-title{ color: var(--widu-white); }
+  .reveal-badge{ color: var(--widu-black); }
+  .reveal-desc, .form-sub, .form-consent{ color: var(--widu-lightgray); }
+  .script-block{ background: #1E1E1D; border: 1px solid #3A3A38; }
+  .form-section{ border-top-color: #333331; }
+  .form-title, .form-field label{ color: var(--widu-white); }
+  .form-field input{ background: #1E1E1D; color: var(--widu-white); border-color: #3A3A38; }
+  .form-field input:focus-visible{ outline-color: var(--widu-yellow); border-color: var(--widu-yellow); }
+  .form-submitted{ color: var(--widu-black); }
+  footer{ background: var(--widu-yellow); color: var(--widu-black); }
 
   @media (prefers-reduced-motion: reduce){
     *{ transition: none !important; animation: none !important; }
@@ -276,6 +320,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#111111"/><path d="M34 32v18a16 16 0 0 0 32 0V32M42 32v18a8 8 0 0 0 16 0V32M50 32v18" fill="none" stroke="#FFD400" stroke-width="4" stroke-linecap="round"/></svg></template>
 
 <!-- ===================================================================
      2. HERO — il titolo grande in apertura. Modifica qui testo/bottone.
@@ -303,7 +348,7 @@
       <div id="quiz-progress-wrap">
         <div class="quiz-progress-label">
           <span>Regole infrante</span>
-          <span id="quiz-count">0 / 8</span>
+          <span id="quiz-count" style="display:none">0 / 8</span>
         </div>
         <div class="quiz-progress-track">
           <div class="quiz-progress-fill" id="quiz-bar"></div>
@@ -317,7 +362,7 @@
 </section>
 
 <footer>
-  <p>© 2025 Widu — dove il lavoro torna a essere fatto di persone.</p>
+  <p>© 2026 Widu — dove il lavoro torna a essere fatto di persone.</p>
 </footer>
 
 <script>
@@ -432,14 +477,25 @@ const quizCount = document.getElementById('quiz-count');
 function renderQuestion(){
   if(qIndex >= QUESTIONS.length){ renderReveal(); return; }
   const item = QUESTIONS[qIndex];
-  let html = '<p class="quiz-question">'+ (qIndex+1) +'/'+QUESTIONS.length+' · '+item.q+'</p>';
+  /* Immagine della domanda: metti i file in img/domanda-1.jpg ... img/domanda-8.jpg.
+     Se il file non c'è, si vede il riquadro giallo con il numero. */
+  let html = '<div class="q-enter"><div class="quiz-visual"><div class="quiz-visual-ph"><span>Regola n°</span><b>'+(qIndex+1)+'</b></div>' +
+    '<img src="img/domanda-'+(qIndex+1)+'.jpg" alt="" onerror="this.remove()"></div>';
+  html += '<p class="quiz-question">'+ (qIndex+1) +'/'+QUESTIONS.length+' · '+item.q+'</p>';
   item.opts.forEach((opt, i) => {
     html += '<button type="button" class="quiz-option" data-i="'+i+'">'+opt.t+'</button>';
   });
+  html += '</div>';
   quizBody.innerHTML = html;
+  let locked = false;
   quizBody.querySelectorAll('.quiz-option').forEach(btn=>{
-    btn.addEventListener('click', () => answer(item.opts[btn.dataset.i]));
+    btn.addEventListener('click', () => {
+      if(locked) return; locked = true;
+      btn.classList.add('picked');
+      setTimeout(() => answer(item.opts[btn.dataset.i]), 260);
+    });
   });
+  if(qIndex > 0) window.scrollTo({ top: document.getElementById('quiz').offsetTop, behavior: 'smooth' });
 }
 
 function answer(opt){
@@ -463,10 +519,15 @@ function renderReveal(){
   });
 
   quizBody.innerHTML =
-    '<div class="reveal-card">' +
-      '<div class="reveal-badge">✓</div>' +
-      '<p class="reveal-title">'+p.title+'</p>' +
-      '<p class="reveal-desc">'+p.desc+'</p>' +
+    /* Carta archetipo: immagini in img/archetipo-visionario.jpg, -stratega, -negoziatore, -connettore */
+    '<div class="arch-card">' +
+      '<div class="arch-visual"><div class="arch-ph">'+p.title.split(' ').pop().charAt(0)+'</div>' +
+        '<img src="img/archetipo-'+top+'.jpg" alt="'+p.title+'" onerror="this.remove()"></div>' +
+      '<div class="arch-body">' +
+        '<p class="arch-eyebrow">Il tuo archetipo Widu</p>' +
+        '<p class="arch-title">'+p.title+'</p>' +
+        '<p class="arch-desc">'+p.desc+'</p>' +
+      '</div>' +
     '</div>' +
     '<div class="script-block">'+ scriptHtml +'</div>' +
     formHtml();
