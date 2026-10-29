@@ -572,6 +572,23 @@ function formHtml(){
       <button type="submit" class="btn-primary" style="width:100%;text-align:center;">Salva il mio profilo</button>
     </form>
     <div class="form-submitted" id="w-submitted">Fatto! Controlla la tua email a breve.</div>
+    <div style="margin-top:36px;padding-top:28px;border-top:1px solid rgba(255,255,255,0.15);">
+      <p style="font-size:15px;color:var(--widu-lightgray);margin-bottom:10px;">Vuoi fare un passo in più?</p>
+      <h3 style="font-family:var(--font-display);font-size:24px;line-height:1.1;margin-bottom:14px;color:var(--widu-yellow);">⚓ INCONTRA I PIRATI DI WIDU</h3>
+      <p style="font-size:15px;line-height:1.55;margin-bottom:12px;">Prenota una breve chiacchierata con noi. Partiremo dalla tua storia, dai tuoi punti di forza e da quello che vorresti realizzare professionalmente.</p>
+      <p style="font-size:15px;line-height:1.55;margin-bottom:22px;">Ti aiuteremo a capire come presentarti meglio alle aziende e come valorizzare ciò che ti rende diverso.</p>
+      <div id="sos-box" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <button type="button" id="sos-btn" onclick="handleSos()" aria-label="SOS: ti scriviamo noi via email" style="display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;border:none;border-radius:999px;background:var(--widu-yellow);color:#111111;font-family:var(--font-body);font-size:14px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,0.5);"><span aria-hidden="true" style="font-size:18px;line-height:1;">⚓</span> SOS</button>
+        <p style="font-size:13px;color:var(--widu-lightgray);text-align:center;">Premi SOS e lasciaci i tuoi contatti: ti richiamiamo noi.</p>
+      </div>
+      <form id="sos-form" onsubmit="sendSos(event)" style="display:none;margin-top:8px;">
+        <div class="form-field"><label for="sos-nome">Nome</label><input type="text" id="sos-nome" required autocomplete="given-name"></div>
+        <div class="form-field"><label for="sos-tel">Cellulare</label><input type="tel" id="sos-tel" required autocomplete="tel" placeholder="333 123 4567"></div>
+        <div class="form-field"><label for="sos-email">Email</label><input type="email" id="sos-email" required autocomplete="email"></div>
+        <button type="submit" id="sos-send" class="btn-primary" style="width:100%;text-align:center;">Invia SOS ai pirati</button>
+      </form>
+      <div id="sos-done" style="display:none;text-align:center;font-family:var(--font-display);font-weight:700;color:var(--widu-yellow);">Ricevuto! I pirati ti scrivono a breve.</div>
+    </div>
   </div>`;
 }
 
@@ -610,6 +627,43 @@ function handleSubmit(e){
     submitBtn.disabled = false;
     submitBtn.textContent = 'Salva il mio profilo';
     alert('Qualcosa non ha funzionato nel salvataggio. Riprova tra poco.');
+  });
+}
+
+function handleSos(){
+  const v = id => (document.getElementById(id) || {}).value || '';
+  document.getElementById('sos-nome').value = v('w-nome');
+  document.getElementById('sos-tel').value = v('w-tel');
+  document.getElementById('sos-email').value = v('w-email');
+  document.getElementById('sos-box').style.display = 'none';
+  const f = document.getElementById('sos-form');
+  f.style.display = 'block';
+  const first = ['sos-nome','sos-tel','sos-email'].map(id => document.getElementById(id)).find(i => !i.value);
+  (first || document.getElementById('sos-send')).focus();
+}
+
+function sendSos(e){
+  e.preventDefault();
+  const btn = document.getElementById('sos-send');
+  btn.disabled = true; btn.textContent = 'Invio in corso...';
+  const nome = document.getElementById('sos-nome').value;
+  const telefono = document.getElementById('sos-tel').value;
+  const email = document.getElementById('sos-email').value;
+  const archetipo = window.wbrTopArchetype || '';
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  Promise.all([
+    post('/.netlify/functions/sos-pirati', { nome, cognome: document.getElementById('w-cognome').value, email, telefono, archetipo }),
+    post('/.netlify/functions/save-contact', { nome, cognome: document.getElementById('w-cognome').value, email, telefono, archetipo, consensoEmail: false, consensoWhatsapp: false }).catch(() => null)
+  ])
+  .then(([res]) => { if(!res.ok) throw new Error('Errore'); })
+  .then(() => {
+    document.getElementById('sos-form').style.display = 'none';
+    document.getElementById('sos-done').style.display = 'block';
+  })
+  .catch(err => {
+    console.error('Errore SOS:', err);
+    btn.disabled = false; btn.textContent = 'Invia SOS ai pirati';
+    alert('Qualcosa non ha funzionato. Riprova tra poco.');
   });
 }
 
