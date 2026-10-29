@@ -655,7 +655,7 @@ function sendSos(e){
     post('/.netlify/functions/sos-pirati', { nome, cognome: document.getElementById('w-cognome').value, email, telefono, archetipo }),
     post('/.netlify/functions/save-contact', { nome, cognome: document.getElementById('w-cognome').value, email, telefono, archetipo, consensoEmail: false, consensoWhatsapp: false }).catch(() => null)
   ])
-  .then(([res]) => { if(!res.ok) throw new Error('Errore'); })
+  .then(([res]) => res.json().catch(() => ({})).then(d => { if(!res.ok) throw new Error(d.error || ('Errore ' + res.status)); }))
   .then(() => {
     document.getElementById('sos-form').style.display = 'none';
     document.getElementById('sos-done').style.display = 'block';
@@ -663,7 +663,7 @@ function sendSos(e){
   .catch(err => {
     console.error('Errore SOS:', err);
     btn.disabled = false; btn.textContent = 'Invia SOS ai pirati';
-    alert('Qualcosa non ha funzionato. Riprova tra poco.');
+    alert('Invio SOS non riuscito.\n' + err.message);
   });
 }
 

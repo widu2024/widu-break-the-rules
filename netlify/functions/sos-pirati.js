@@ -15,9 +15,13 @@ exports.handler = async function (event) {
     const { nome, cognome, email, telefono, archetipo } = JSON.parse(event.body);
     if (!email) return { statusCode: 400, body: JSON.stringify({ error: "Email mancante" }) };
 
-    const { BREVO_API_KEY, SOS_TO_EMAIL, SOS_FROM_EMAIL } = process.env;
-    if (!BREVO_API_KEY || !SOS_TO_EMAIL || !SOS_FROM_EMAIL) {
-      return { statusCode: 500, body: JSON.stringify({ error: "Configurazione email mancante" }) };
+    const env = process.env;
+    const BREVO_API_KEY = env.BREVO_API_KEY;
+    const SOS_TO_EMAIL = env.SOS_TO_EMAIL || env.NOTIFY_EMAIL || "hello@wi-du.it";
+    const SOS_FROM_EMAIL = env.SOS_FROM_EMAIL || env.SENDER_EMAIL;
+    const manca = [!BREVO_API_KEY && "BREVO_API_KEY", !SOS_FROM_EMAIL && "SOS_FROM_EMAIL"].filter(Boolean);
+    if (manca.length) {
+      return { statusCode: 500, body: JSON.stringify({ error: "Variabile Netlify mancante: " + manca.join(", ") }) };
     }
 
     const esc = s => String(s || "-").replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]));
@@ -41,8 +45,10 @@ exports.handler = async function (event) {
     });
 
     if (!res.ok) {
-      console.error("Errore da Brevo:", await res.text());
-      return { statusCode: 502, body: JSON.stringify({ error: "Invio email non riuscito" }) };
+      const t = await res.text();
+      console.error("Errore da Brevo:", t);
+      let msg = t; try { msg = JSON.parse(t).message || t; } catch (_) {}
+      return { statusCode: 502, body: JSON.stringify({ error: "Brevo: " + msg }) };
     }
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   } catch (err) {
